@@ -7,29 +7,31 @@ projection, and graph clustering with label propagation.
 This repository contains the analysis pipeline for the BiKE (Biobank of
 Karolinska Endarterectomies) plaque histology study. It was restructured from
 the original research scripts; the logic is unchanged, only the organization.
+The pipeline is environment-independent: every stage is a plain Python script
+that runs on a laptop (GPU if available, CPU otherwise) or any cluster.
 
 ## Pipeline overview
 
 ```
 WSIs (H&E, Olympus VS200, 20x, DZI pyramids)
-   │  1. Tissue masking (Otsu) and tile listing (224 px tiles, 56 px overlap)
-   ▼
+   |  1. Tissue masking (Otsu) and tile listing (224 px tiles, 56 px overlap)
+   v
 Feature extraction (per foundation model)
-   │  2. Five pre-trained feature extractors, benchmarked:
-   │     Virchow2 (2560-d), UNI (1024-d), UNI2 (1536-d),
-   │     TissueConcepts HViT (512-d), Ciga ResNet18 (512-d)
-   ▼
+   |  2. Five pre-trained feature extractors, benchmarked:
+   |     Virchow2 (2560-d), UNI (1024-d), UNI2 (1536-d),
+   |     TissueConcepts HViT (512-d), Ciga ResNet18 (512-d)
+   v
 Weakly supervised MLP projection
-   │  3. 4-layer-block MLP trained on weak ROI annotations maps features to a
-   │     64-d embedding (multi-class focal loss, AdaBelief)
-   ▼
+   |  3. 4-layer-block MLP trained on weak ROI annotations maps features to a
+   |     64-d embedding (multi-class focal loss, AdaBelief)
+   v
 Graph construction and clustering
-   │  4. kNN graph (k=50) on the 64-d embedding; Leiden community detection
-   ▼
+   |  4. kNN graph (k=50) on the 64-d embedding; Leiden community detection
+   v
 Label propagation
-   │  5. Community-majority assignment spreads the 6 tissue-class labels
-   │     (IPH, CH, IF, CA, RM, CT) to all tiles, annotated or not
-   ▼
+   |  5. Community-majority assignment spreads the 6 tissue-class labels
+   |     (IPH, CH, IF, CA, RM, CT) to all tiles, annotated or not
+   v
 Evaluation and analyses
       6. Confusion matrices and AUROC on the held-out validation tiles,
          interobserver comparison, classification confidence (mode of the
@@ -39,24 +41,32 @@ Evaluation and analyses
 ## Repository layout
 
 ```
-athero/
-  constants.py        Class hierarchy, canonical ordering, colors
-  dzi.py              Deep Zoom Image (DZI) pyramid geometry helpers
-  masking.py          Otsu tissue detection and tile tissue-content listing
-  features/           Model registry, datasets, feature extraction
-  mlp/                FeatToClass MLP, training on weak annotations
-  graph/              kNN graph, Leiden clustering, label propagation
-  annotate.py         Annotate (segment) new slides via the 64-d embedding
-  evaluation/         Confusion matrices, AUROC, classification confidence
-  attention/          UNI per-head attention maps and combination search
-  viz.py              Plotting helpers (confusion matrices, UMAP, PLY export)
+extract_features.py   Run one foundation model over all slides -> features .npy
+train_mlp.py           Train the weakly supervised MLP for one model
+build_graph.py         64-d projection, kNN graph, Leiden, label propagation
+annotate_slides.py     Segment new slides (kNN label transfer)
+evaluate_metrics.py    Confusion matrices (3 levels) + AUROC on validation tiles
+make_partition.py      Slide-level stratified train/validation split
+
+athero/                The importable package behind the entry points
+  constants.py           Class hierarchy, canonical ordering, colors
+  dzi.py                 DZI pyramid geometry helpers
+  masking.py             Otsu tissue detection and tile listing
+  features/              Model registry, datasets, extraction
+  mlp/                   FeatToClass MLP, training on weak annotations
+  graph/                 kNN graph, Leiden clustering, label propagation
+  annotate.py            Segmentation of new slides
+  evaluation/            Confusion matrices, AUROC, classification confidence
+  attention/             UNI per-head attention maps and combination search
+  viz.py                 Plotting helpers (confusion matrices, UMAP, PLY export)
 configs/
-  models.yaml         Feature-extractor registry (weights, dims, transforms)
-  cluster_maps.json   Per-model Leiden community -> tissue class assignments
-scripts/              SLURM job scripts (feature extraction, annotation)
-partition/            Slide-level train/validation partitioning
-notebooks/           Mapping of the original exploratory notebooks
+  models.yaml           Feature-extractor registry (weights, dims, transforms)
+  cluster_maps.json     Per-model Leiden community -> tissue class assignments
+partition/               Slide-level train/validation partitioning
 ```
+
+Each entry-point script is a thin wrapper: the logic lives in the `athero`
+package, the script just parses command-line arguments and calls it.
 
 ## Label hierarchy
 
@@ -80,41 +90,50 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-GPU jobs are expected to run under SLURM (see `scripts/`). All heavy steps
-write their outputs to a working directory (`$WORK` below), never inside the
-repository.
+Use `--device cpu` on machines without a GPU (feature extraction will be
+slow; the MLP and graph stages are fine).
 
 ## Usage
 
+Run from the repository root. All paths are your own; nothing is
+cluster-specific.
+
 ```bash
 # 1. List tissue tiles per slide
-python -m athero.masking --dzis $WORK/dzis --out $WORK/mask/csv
+python -m athero.masking --dzis <dir of DZI pyramids> --out <csv out dir>
 
 # 2. Extract features for one model (uni | uni2 | v2 | ciga | tc)
-python -m athero.features.extract --model v2 --scratch $TMPDIR --batch 50
+python extract_features.py --model v2 \
+    --tiles-dir <dir with <slide>_files/ folders> \
+    --csv-dir <dir with <slide>_HE.csv> \
+    --weights <model weights dir> --out <features dir>
 
 # 3. Partition the 50 annotated slides into train/validation (slide-level,
 #    stratified by class prevalence)
-python -m partition.split --annotations $WORK/annotated_csv --out $WORK/data_partition.csv
+python make_partition.py --annotations <dir with <slide>_HE.csv> \
+    --out data_partition.csv
 
 # 4. Train the weakly supervised MLP for one model
-python -m athero.mlp.train --model v2 --data $WORK/data_for_MLP/v2
+python train_mlp.py --model v2 --data <data_for_MLP/v2>
 
 # 5. Project features to 64-d, build the kNN graph, run Leiden,
 #    and propagate labels by community majority
-python -m athero.graph.run --model v2 --data $WORK/data_for_graphs/v2 \
-    --weights $WORK/model/MLP/MLP-v2-weights.pth \
-    --annotations $WORK/data_for_graphs/common_maindf_weak_annot.csv
+python build_graph.py --model v2 --data <data_for_graphs/v2> \
+    --weights <MLP-v2-weights.pth> \
+    --annotations <common_maindf_weak_annot.csv>
 
-# 6. Segment (annotate) all remaining slides
-python -m athero.annotate --model v2 --scratch $TMPDIR --batch 50 --knn 5 \
-    --study $WORK/data_for_graphs/v2 --weights $WORK/model/MLP/MLP-v2-weights.pth \
-    --out $WORK/annotations
+# 6. Segment (annotate) new slides
+python annotate_slides.py --model v2 --scratch <dir with v2_features/*.npy> \
+    --batch 50 --knn 5 --study <data_for_graphs/v2> \
+    --weights <MLP-v2-weights.pth> --out <annotations dir>
 
-# 7. Evaluation: confusion matrices, AUROC, confidence maps
-python -m athero.evaluation.metrics --model v2 --data $WORK
-python -m athero.evaluation.confidence --model v2 --data $WORK
+# 7. Evaluation: confusion matrices and AUROC
+python evaluate_metrics.py --model v2 --data <work dir>
 ```
+
+Feature extraction is run once per model (five times in total); every stage
+after it is parameterised by the same model name, and outputs are written to
+per-model directories.
 
 ## Data
 
