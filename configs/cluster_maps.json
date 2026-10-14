@@ -1,0 +1,58 @@
+{
+  "uni2": {
+    "5": "Remnant media", "14": "Remnant media", "2": "Remnant media",
+    "7": "Remnant media", "16": "Inflammation", "17": "Connective tissue",
+    "10": "Connective tissue", "22": "IPH", "15": "calcification",
+    "20": "Connective tissue", "25": "calcification", "12": "Connective tissue",
+    "18": "Chol", "13": "Chol", "6": "Chol", "27": "Connective tissue",
+    "23": "IPH", "19": "Chol", "0": "calcification", "24": "IPH",
+    "11": "Chol", "4": "IPH", "3": "calcification", "21": "IPH",
+    "8": "IPH", "1": "Inflammation", "26": "Inflammation",
+    "9": "Connective tissue", "28": "Remnant media"
+  },
+  "uni": {
+    "11": "Remnant media", "18": "Remnant media", "3": "Remnant media",
+    "6": "Remnant media", "15": "calcification", "14": "Remnant media",
+    "20": "calcification", "13": "Inflammation", "2": "calcification",
+    "4": "Inflammation", "7": "Connective tissue", "0": "Connective tissue",
+    "12": "calcification", "17": "Connective tissue", "16": "Chol",
+    "5": "Chol", "10": "Chol", "22": "Chol", "1": "IPH", "9": "IPH",
+    "21": "calcification", "24": "Connective tissue", "8": "IPH",
+    "19": "Inflammation", "23": "Connective tissue"
+  },
+  "ciga": {
+    "1": "Remnant media", "0": "Remnant media", "10": "calcification",
+    "2": "calcification", "12": "Remnant media", "15": "Remnant media",
+    "18": "Connective tissue", "6": "Chol", "8": "Inflammation",
+    "19": "calcification", "9": "Connective tissue", "13": "Connective tissue",
+    "11": "IPH", "24": "Inflammation", "3": "Connective tissue",
+    "22": "Chol", "14": "Chol", "4": "Chol", "26": "Connective tissue",
+    "23": "calcification", "21": "calcification", "5": "calcification",
+    "7": "IPH", "16": "Connective tissue", "20": "IPH", "25": "IPH",
+    "17": "Inflammation", "27": "Connective tissue"
+  },
+  "v2": {
+    "1": "Remnant media", "16": "IPH", "12": "Remnant media",
+    "14": "Remnant media", "8": "Connective tissue", "15": "calcification",
+    "7": "calcification", "18": "Remnant media", "19": "IPH",
+    "24": "Connective tissue", "21": "Connective tissue",
+    "20": "calcification", "4": "Connective tissue", "2": "calcification",
+    "28": "IPH", "6": "Chol", "9": "Connective tissue", "11": "Chol",
+    "27": "IPH", "26": "Chol", "22": "calcification", "10": "IPH",
+    "3": "Chol", "17": "calcification", "13": "IPH", "0": "Inflammation",
+    "23": "Inflammation", "25": "Chol", "5": "Connective tissue",
+    "29": "Connective tissue"
+  },
+  "tc": {
+    "4": "Remnant media", "17": "Inflammation", "27": "Remnant media",
+    "12": "calcification", "22": "Chol", "9": "calcification",
+    "8": "Connective tissue", "16": "Remnant media",
+    "10": "Connective tissue", "23": "calcification",
+    "13": "Connective tissue", "7": "Connective tissue",
+    "15": "Connective tissue", "3": "Remnant media", "11": "Inflammation",
+    "29": "Inflammation", "19": "Inflammation", "14": "Chol",
+    "28": "Remnant media", "1": "calcification", "25": "Connective tissue",
+    "21": "Connective tissue", "26": "Chol", "24": "IPH", "0": "Chol",
+    "5": "calcification", "2": "IPH", "20": "Chol", "18": "IPH", "6": "IPH"
+  }
+}

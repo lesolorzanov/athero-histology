@@ -1,0 +1,51 @@
+# Feature-extractor registry.
+# weights_dir: where each checkpoint lives on the cluster (relative to $WORK).
+# feature_dim: dimensionality of the extracted tile embedding.
+
+models:
+  v2:
+    description: "Virchow2 (Paige AI), ViT, 3.1M WSIs pretraining"
+    loader: huggingface
+    repo: paige-ai/Virchow2
+    feature_dim: 2560
+    pooling: "cls + mean of 5 pooled region tokens"
+  uni:
+    description: "UNI (MahmoodLab), ViT-Large/16, ~100k WSIs"
+    loader: timm
+    arch: vit_large_patch16_224
+    weights_dir: model/uni
+    feature_dim: 1024
+  uni2:
+    description: "UNI2 (MahmoodLab), ViT-Giant/14, ~350k WSIs"
+    loader: timm
+    arch: vit_giant_patch14_224
+    weights_dir: model/uni2
+    feature_dim: 1536
+  tc:
+    description: "TissueConcepts HViT (hierarchical ViT), ~12k WSIs"
+    loader: mmm
+    encoder: unicorn
+    feature_dim: 512
+  ciga:
+    description: "Ciga ResNet18, self-supervised on 10% ImageNet"
+    loader: torchvision
+    arch: resnet18
+    weights_dir: model/ciga
+    feature_dim: 512
+
+# Fixed pipeline hyperparameters (see manuscript Methods)
+pipeline:
+  tile_size: 224
+  tile_overlap: 56
+  graph_knn: 50
+  confidence_knn: 100
+  leiden:
+    partition_type: RBConfigurationVertexPartition
+    resolution: 2.5
+  mlp:
+    embedding_dim: 64
+    epochs: 35
+    batch_size: 500
+    lr: 1.0e-6
+    focal_gamma: 3
+    oversample_per_class: 15000
