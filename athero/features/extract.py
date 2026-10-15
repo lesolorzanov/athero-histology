@@ -57,7 +57,6 @@ def extract_features(model_name, model, dataset, device, batch=50):
             images = images.to(device)
             if model_name == "v2":
                 images = images.half()
-            if model_name == "v2":
                 output = model(images)  # (B, 261, 1280)
                 class_token = output[:, 0, :]
                 patch_tokens = output[:, 1:, :]
